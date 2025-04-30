@@ -1,0 +1,3 @@
+from pumpia_acr_large.large_acr_rpt_collection import LargeACRrptCollection
+
+LargeACRrptCollection.run()
