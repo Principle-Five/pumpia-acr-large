@@ -1,0 +1,127 @@
+"""
+Collection for Large ACR with repeat images.
+"""
+
+from pumpia.module_handling.module_collections import (OutputFrame,
+                                                       WindowGroup,
+                                                       BaseCollection)
+from pumpia.module_handling.in_outs.groups import IOGroup
+from pumpia.module_handling.in_outs.viewer_ios import MonochromeDicomViewerIO
+from pumpia.widgets.viewers import BaseViewer
+
+from pumpia_acr_large.large_acr_context import LargeACRContextManagerGenerator
+from pumpia_acr_large.modules.sub_snr import LargeACRSubSNR
+from pumpia_acr_large.modules.uniformity import LargeACRUniformity
+from pumpia_acr_large.modules.ghosting import LargeACRGhosting
+from pumpia_acr_large.modules.slice_width import LargeACRSliceWidth
+from pumpia_acr_large.modules.slice_pos import LargeACRSlicePosition
+from pumpia_acr_large.modules.phantom_width import LargeACRPhantomWidth
+from pumpia_acr_large.modules.resolution import LargeACRResolution
+
+
+class LargeACRrptCollection(BaseCollection):
+    """
+    Collection for large ACR phantom with repeated scans.
+    """
+    context_manager_generator = LargeACRContextManagerGenerator()
+
+    viewer1 = MonochromeDicomViewerIO(row=0, column=0)
+    viewer2 = MonochromeDicomViewerIO(row=0, column=1)
+
+    snr = LargeACRSubSNR(verbose_name="SNR")
+
+    uniformity1 = LargeACRUniformity(verbose_name="Uniformity")
+    uniformity2 = LargeACRUniformity(verbose_name="Uniformity")
+
+    ghosting1 = LargeACRGhosting(verbose_name="Ghosting")
+    ghosting2 = LargeACRGhosting(verbose_name="Ghosting")
+
+    phantom_width1 = LargeACRPhantomWidth(verbose_name="Phantom Width")
+    phantom_width2 = LargeACRPhantomWidth(verbose_name="Phantom Width")
+
+    slice_width1 = LargeACRSliceWidth(verbose_name="Slice Width")
+    slice_width2 = LargeACRSliceWidth(verbose_name="Slice Width")
+
+    slice_pos1 = LargeACRSlicePosition(verbose_name="Slice Position")
+    slice_pos2 = LargeACRSlicePosition(verbose_name="Slice Position")
+
+    resolution1 = LargeACRResolution(verbose_name="Resolution")
+    resolution2 = LargeACRResolution(verbose_name="Resolution")
+
+    snr_output = OutputFrame(verbose_name="SNR Output")
+    image1_output = OutputFrame(verbose_name="Image 1 Results")
+    image2_output = OutputFrame(verbose_name="Image 2 Results")
+
+    uniformity_window = WindowGroup([uniformity1, uniformity2],
+                                    verbose_name="Uniformity")
+    ghosting_window = WindowGroup([ghosting1, ghosting2],
+                                  verbose_name="Ghosting")
+    slice_width_window = WindowGroup([slice_width1, slice_width2],
+                                     verbose_name="Slice Width")
+    slice_pos_window = WindowGroup([slice_pos1, slice_pos2],
+                                   verbose_name="Slice Position")
+    phantom_width_window = WindowGroup([phantom_width1, phantom_width2],
+                                       verbose_name="Phantom Width")
+    resolution_window = WindowGroup([resolution1, resolution2],
+                                    verbose_name="Resolution")
+
+    def load_outputs(self):
+        self.snr_output.register_output(self.snr.signal)
+        self.snr_output.register_output(self.snr.noise)
+        self.snr_output.register_output(self.snr.snr)
+        self.snr_output.register_output(self.snr.cor_snr)
+
+        self.image1_output.register_output(self.uniformity1.uniformity)
+        self.image1_output.register_output(self.ghosting1.ghosting)
+        self.image1_output.register_output(self.slice_width1.slice_width)
+        self.image1_output.register_output(self.slice_pos1.slice_1_pos)
+        self.image1_output.register_output(self.slice_pos1.slice_11_pos)
+        self.image1_output.register_output(self.phantom_width1.linearity)
+        self.image1_output.register_output(self.phantom_width1.distortion)
+        self.image1_output.register_output(self.resolution1.total_contrast)
+
+        self.image2_output.register_output(self.uniformity2.uniformity)
+        self.image2_output.register_output(self.ghosting2.ghosting)
+        self.image2_output.register_output(self.slice_width2.slice_width)
+        self.image2_output.register_output(self.slice_pos2.slice_1_pos)
+        self.image2_output.register_output(self.slice_pos2.slice_11_pos)
+        self.image2_output.register_output(self.phantom_width2.linearity)
+        self.image2_output.register_output(self.phantom_width2.distortion)
+        self.image2_output.register_output(self.resolution2.total_contrast)
+
+        IOGroup([self.uniformity1.size, self.uniformity2.size])
+        IOGroup([self.uniformity1.kernel_bool, self.uniformity2.kernel_bool])
+        IOGroup([self.ghosting1.size, self.ghosting2.size])
+        IOGroup([self.slice_width1.tan_theta, self.slice_width2.tan_theta])
+        IOGroup([self.slice_width1.max_perc, self.slice_width2.max_perc])
+        IOGroup([self.slice_width1.fit_type, self.slice_width2.fit_type])
+        IOGroup([self.phantom_width1.max_perc, self.phantom_width2.max_perc])
+        IOGroup([self.phantom_width1.bool_vertical, self.phantom_width2.bool_vertical])
+        IOGroup([self.phantom_width1.bool_horizontal, self.phantom_width2.bool_horizontal])
+        IOGroup([self.phantom_width1.bool_up_slope, self.phantom_width2.bool_up_slope])
+        IOGroup([self.phantom_width1.bool_down_slope, self.phantom_width2.bool_down_slope])
+        IOGroup([self.resolution1.override_centre, self.resolution2.override_centre])
+        IOGroup([self.resolution1.x_centre_override, self.resolution2.x_centre_override])
+        IOGroup([self.resolution1.y_centre_override, self.resolution2.y_centre_override])
+
+    def on_image_load(self, viewer: BaseViewer) -> None:
+        if viewer is self.viewer1:
+            if self.viewer1.image is not None:
+                image = self.viewer1.image
+                self.snr.viewer1.load_image(image)
+                self.uniformity1.viewer.load_image(image)
+                self.ghosting1.viewer.load_image(image)
+                self.slice_width1.viewer.load_image(image)
+                self.slice_pos1.viewer1.load_image(image)
+                self.phantom_width1.viewer.load_image(image)
+                self.resolution1.viewer.load_image(image)
+        elif viewer is self.viewer2:
+            if self.viewer2.image is not None:
+                image = self.viewer2.image
+                self.snr.viewer2.load_image(image)
+                self.uniformity2.viewer.load_image(image)
+                self.ghosting2.viewer.load_image(image)
+                self.slice_width2.viewer.load_image(image)
+                self.slice_pos2.viewer1.load_image(image)
+                self.phantom_width2.viewer.load_image(image)
+                self.resolution2.viewer.load_image(image)
