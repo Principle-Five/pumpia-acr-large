@@ -20,12 +20,7 @@ BOX_X_OFFSET = -5
 BOX_SIDE_LENGTH = 25
 LINE_LENGTH = 8
 LINE_GAP = 2
-
-# step 1: draw big box
-# step 2: find centre pixel from big box profiles
-# step 3: draw horizontal and vertical lines across rows/columns defined by ACR
-# step 4: get contrast (max-min)/(max+min) for each line
-# step 5: result is maximum contrast for rows/columns
+POINT_SEP = 1
 
 
 def get_contrast(profile: np.ndarray[tuple[int], np.dtype]) -> float:
@@ -213,12 +208,12 @@ class LargeACRResolution(PhantomModule):
         v_line_length = LINE_LENGTH * pixel_height
 
         if self.main_roi.roi is not None:
-            if self.override_centre.value:
-                x_cent_loc = self.x_centre_override.value + self.main_roi.roi.xmin
-                y_cent_loc = self.y_centre_override.value + self.main_roi.roi.ymin
-            else:
-                x_cent_loc = int(np.argmax(self.main_roi.roi.h_profile)) + self.main_roi.roi.xmin
-                y_cent_loc = int(np.argmax(self.main_roi.roi.v_profile)) + self.main_roi.roi.ymin
+            if not self.override_centre.value:
+                self.x_centre_override.value = int(np.argmax(self.main_roi.roi.h_profile))
+                self.y_centre_override.value = int(np.argmax(self.main_roi.roi.v_profile))
+
+            x_cent_loc = self.x_centre_override.value + self.main_roi.roi.xmin
+            y_cent_loc = self.y_centre_override.value + self.main_roi.roi.ymin
 
             # -1 required to keep line length as line ROI ends are included
             if vertical_dir[0] == "U":
