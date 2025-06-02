@@ -24,6 +24,7 @@ class LargeACRrptCollection(BaseCollection):
     Collection for large ACR phantom with repeated scans.
     """
     context_manager_generator = LargeACRContextManagerGenerator()
+    name = "Large ACR Repeat Collection"
 
     viewer1 = MonochromeDicomViewerIO(row=0, column=0)
     viewer2 = MonochromeDicomViewerIO(row=0, column=1)
