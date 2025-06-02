@@ -42,6 +42,7 @@ class LargeACRSliceWidth(PhantomModule):
     context_manager_generator = LargeACRContextManagerGenerator()
     show_draw_rois_button = True
     show_analyse_button = True
+    name = "Slice Width"
 
     viewer = MonochromeDicomViewerIO(row=0, column=0)
 
